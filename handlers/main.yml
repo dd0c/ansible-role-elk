@@ -1,0 +1,9 @@
+- name: Restart elasticsearch.service
+  ansible.builtin.systemd:
+    name: elasticsearch.service
+    state: restarted
+
+- name: Restart kibana.service
+  ansible.builtin.systemd:
+    name: kibana.service
+    state: restarted

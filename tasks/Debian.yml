@@ -1,0 +1,116 @@
+---
+
+- name: Ensure group "elasticsearch" exists with correct gid
+  ansible.builtin.group:
+    name: elasticsearch
+    state: present
+    gid: 112
+
+- name: Ensure user "elasticsearch" with correct uid and a primary group of "elasticsearch"
+  ansible.builtin.user:
+    name: elasticsearch
+    uid: 106
+    group: elasticsearch
+    shell: /bin/false
+
+- name: Ensure ElasticSearch data shares are present
+  ansible.builtin.file:
+    path: /srv/elk-data
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0770'
+    state: directory
+
+- name: Ensure all prerequisites for ElasticSearch are present 
+  ansible.builtin.apt:
+    pkg:
+    - curl
+    - gnupg2
+    - apt-transport-https
+
+- name: Add ES GPG key
+  ansible.builtin.apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Copy ELK apt list with owner and permissions
+  ansible.builtin.copy:
+    src: files/etc/apt/sources.list.d/elastic-7.x.list
+    dest: /etc/apt/sources.list.d/elastic-7.x.list
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Update the repository cache and ensure package "elasticsearch" is present
+  ansible.builtin.apt:
+    name: elasticsearch
+    state: present
+    update_cache: yes
+
+#- name: Copy ELK certificate with owner and permissions
+#  ansible.builtin.copy:
+#    src: files/etc/elasticsearch/elastic-certificates.p12
+#    dest: /etc/elasticsearch/elastic-certificates.p12
+#    owner: root
+#    group: elasticsearch
+#    mode: '0660'
+
+#- name: Copy ELK certificate CA with owner and permissions
+#  ansible.builtin.copy:
+#    src: files/etc/elasticsearch/elastic-stack-ca.p12
+#    dest: /etc/elasticsearch/elastic-stack-ca.p12
+#    owner: root
+#    group: elasticsearch
+#    mode: '0660'
+#  when: ansible_nodename == "elk1"
+
+- name: Template /etc/elasticsearch/elasticsearch.yml.j2
+  ansible.builtin.template:
+    src: templates/etc/elasticsearch/elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+    owner: root
+    group: elasticsearch
+    mode: '0660'
+  notify: Restart elasticsearch.service
+
+- name: Add line1 in file /etc/hosts
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: '# Outward to reverse proxy (ipv6 to ipv4)'
+
+- name: Add line2 in file /etc/hosts
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: '2a01:4f9:6a:202c::1     geoip.elastic.co'
+
+- name: Template /etc/elasticsearch/jvm.options
+  ansible.builtin.template:
+    src: templates/etc/elasticsearch/jvm.options.j2
+    dest: /etc/elasticsearch/jvm.options
+    owner: root
+    group: elasticsearch
+    mode: '0660'
+  notify: Restart elasticsearch.service
+
+#- name: Show facts available on the system
+#  ansible.builtin.debug:
+#    var: ansible_facts
+
+- name: Ensure Kibana is present
+  ansible.builtin.apt:
+    name:
+      - kibana
+    state: present
+  when: ansible_nodename == "elk1"
+
+- name: Template /etc/kibana/kibana.yml.j2
+  ansible.builtin.template:
+    src: templates/etc/kibana/kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+    owner: root
+    group: kibana
+    mode: '0660'
+  when: ansible_nodename == "elk1"
+  notify: Restart kibana.service
+
+...

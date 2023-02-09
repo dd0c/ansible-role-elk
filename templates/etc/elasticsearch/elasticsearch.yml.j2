@@ -1,0 +1,33 @@
+cluster.name: akuadora
+node.name: {{ ansible_hostname }}
+path.data: /srv/elk-data
+path.logs: /var/log/elasticsearch
+bootstrap.memory_lock: false
+network.host: {{ ansible_default_ipv6.address }}
+http.port: 9200
+discovery.seed_hosts: ["elk1.heimdall.akuadora.net", "elk2.heimdall.akuadora.net", "elk3.heimdall.akuadora.net"]
+cluster.initial_master_nodes: ["elk1.heimdall.akuadora.net"]
+# ---------------------------------- Security ----------------------------------
+#
+#                                 *** WARNING ***
+#
+# Elasticsearch security features are not enabled by default.
+# These features are free, but require configuration changes to enable them.
+# This means that users don<E2><80><99>t have to provide credentials and can get full access
+# to the cluster. Network connections are also not encrypted.
+#
+# To protect your data, we strongly encourage you to enable the Elasticsearch security features. 
+# Refer to the following documentation for instructions.
+#
+# https://www.elastic.co/guide/en/elasticsearch/reference/7.16/configuring-stack-security.html
+
+#xpack.security.transport.ssl.enabled: true
+#xpack.security.transport.ssl.verification_mode: certificate
+##xpack.security.transport.ssl.verification_mode: full
+#xpack.security.transport.ssl.client_authentication: required
+#xpack.security.transport.ssl.keystore.path: /etc/elasticsearch/elastic-certificates.p12
+#xpack.security.transport.ssl.truststore.path: /etc/elasticsearch/elastic-certificates.p12
+
+#xpack.security.enabled: true
+##xpack.security.authc.api_key.enabled: true
+##xpack.security.transport.ssl.enabled
